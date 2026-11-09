@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Significance Workshop</title>
+<style>
+  :root {
+    --ink: #1d2433;
+    --muted: #5b6475;
+    --line: #d9dde5;
+    --bg: #ffffff;
+    --panel: #f6f7f9;
+    --accent: #2c3e66;
+    --accent-soft: #edf0f6;
+    --flash: #fff1a8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .scenario-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+  .scenario-bar label { font-weight: 600; }
+  select {
+    font: inherit; padding: 6px 10px; border: 1px solid var(--line);
+    border-radius: 6px; background: #fff; color: var(--ink); max-width: 100%;
+  }
+  .intro {
+    background: var(--panel); border-left: 4px solid var(--accent);
+    padding: 12px 16px; border-radius: 0 6px 6px 0; margin-bottom: 20px;
+  }
+  .intro p { margin: 0 0 8px; }
+  .intro p:last-child { margin: 0; }
+  .sim { font-size: .9rem; color: var(--muted); font-style: italic; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 24px; align-items: start; }
+  @media (max-width: 780px) { .grid { grid-template-columns: 1fr; } }
+  .panel { border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+  .panel h2 { font-size: 1.05rem; margin: 0 0 12px; }
+  .ctl { margin-bottom: 20px; }
+  .ctl-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .ctl-head label { font-weight: 600; }
+  .ctl .hint { font-size: .85rem; color: var(--muted); margin: 2px 0 6px; }
+  .ctl input[type=number] {
+    width: 100px; font: inherit; padding: 4px 6px; border: 1px solid var(--line);
+    border-radius: 6px; text-align: right; color: var(--ink);
+  }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .readout {
+    font-family: "Times New Roman", Times, Georgia, serif; font-size: 1.05rem;
+    background: var(--panel); padding: 8px 12px; border-radius: 6px;
+  }
+  .readout .lab { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: .85rem; color: var(--muted); display: block; }
+  .aside { font-size: .9rem; color: var(--muted); margin-top: 10px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  button {
+    font: inherit; font-size: .92rem; padding: 7px 12px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--accent); background: var(--accent); color: #fff;
+  }
+  button.secondary { background: #fff; color: var(--accent); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .status { font-size: .85rem; color: var(--muted); margin-top: 8px; min-height: 1.3em; }
+
+  /* Journal-style table */
+  .table-scroll { overflow-x: auto; }
+  .journal { font-family: "Times New Roman", Times, Georgia, serif; font-size: 1rem; color: #000; }
+  .journal .tnum { font-weight: bold; margin: 0; }
+  .journal .ttitle { font-style: italic; margin: 0 0 8px; }
+  .journal table { border-collapse: collapse; width: 100%; }
+  .journal thead th {
+    border-top: 2px solid #000; border-bottom: 1px solid #000;
+    padding: 6px 8px; font-weight: normal; text-align: center; white-space: nowrap;
+  }
+  .journal thead th.rowhead { text-align: left; }
+  .journal tbody td { padding: 2px 8px; text-align: center; white-space: nowrap; }
+  .journal tbody td.rowlab { text-align: left; }
+  .journal tbody tr.paren td { padding-bottom: 6px; }
+  .journal tbody tr:last-child td { border-bottom: 2px solid #000; padding-bottom: 6px; }
+  .journal tbody tr.first td { padding-top: 6px; }
+  .journal .cur { background: var(--accent-soft); }
+  .journal .stars { display: inline-block; width: 1.9em; text-align: left; }
+  .journal .note { font-size: .9rem; margin-top: 6px; line-height: 1.4; }
+  .journal .note i { font-style: italic; }
+  @keyframes flash { from { background: var(--flash); } to { background: var(--accent-soft); } }
+  .journal td.flash { animation: flash 1.2s ease-out; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Significance Workshop</h1>
+  <p class="sub">How effect size, variability, and sample size decide which results earn stars.</p>
+
+  <div class="scenario-bar">
+    <label for="scenario">Scenario</label>
+    <select id="scenario">
+      <option value="moon">The full moon and emergency department visits</option>
+      <option value="rj">Restorative justice and victim satisfaction</option>
+    </select>
+  </div>
+
+  <div class="intro" id="intro"></div>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="ctlhead">
+      <h2 id="ctlhead">Change the study</h2>
+
+      <div class="ctl">
+        <div class="ctl-head">
+          <label for="diffRange">Difference in means</label>
+          <input type="number" id="diffNum" aria-label="Difference in means (exact value)">
+        </div>
+        <p class="hint" id="diffHint"></p>
+        <input type="range" id="diffRange">
+      </div>
+
+      <div class="ctl">
+        <div class="ctl-head">
+          <label for="sdRange">Standard deviation</label>
+          <input type="number" id="sdNum" aria-label="Standard deviation (exact value)">
+        </div>
+        <p class="hint" id="sdHint"></p>
+        <input type="range" id="sdRange">
+      </div>
+
+      <div class="ctl">
+        <div class="ctl-head">
+          <label for="nRange">Sample size per group</label>
+          <input type="number" id="nNum" step="1" aria-label="Sample size per group (exact value)">
+        </div>
+        <p class="hint" id="nHint"></p>
+        <input type="range" id="nRange" min="0" max="1000" step="1">
+      </div>
+
+      <div class="readout" aria-live="polite">
+        <span class="lab">Behind the stars</span>
+        <span id="stat"></span>
+      </div>
+      <p class="aside" id="aside"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="tblhead">
+      <h2 id="tblhead">The results, as a journal would print them</h2>
+      <div class="journal">
+        <p class="tnum">Table 1</p>
+        <p class="ttitle" id="ttitle"></p>
+        <div class="table-scroll">
+          <table id="results"></table>
+        </div>
+        <p class="note"><i>Note.</i> Simulated data. Groups are equal in size. Standard deviations and standard errors appear in parentheses. *<i>p</i> &lt; .05. **<i>p</i> &lt; .01. ***<i>p</i> &lt; .001 (two-tailed).</p>
+      </div>
+      <div class="btns">
+        <button type="button" id="saveBtn">Save current results as a column</button>
+        <button type="button" class="secondary" id="clearBtn">Clear saved columns</button>
+        <button type="button" class="secondary" id="resetBtn">Reset the controls</button>
+      </div>
+      <p class="status" id="status" aria-live="polite"></p>
+    </section>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Statistics ----------
+  function lnGamma(z) {
+    var c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+      771.32342877765313, -176.61502916214059, 12.507343278686905,
+      -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+    if (z < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * z)) - lnGamma(1 - z);
+    z -= 1;
+    var x = c[0];
+    for (var i = 1; i < 9; i++) x += c[i] / (z + i);
+    var t = z + 7.5;
+    return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
+  }
+
+  function betacf(a, b, x) {
+    var MAXIT = 500, EPS = 3e-14, FPMIN = 1e-300;
+    var qab = a + b, qap = a + 1, qam = a - 1;
+    var c = 1, d = 1 - qab * x / qap;
+    if (Math.abs(d) < FPMIN) d = FPMIN;
+    d = 1 / d;
+    var h = d;
+    for (var m = 1; m <= MAXIT; m++) {
+      var m2 = 2 * m;
+      var aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+      d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+      c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d; h *= d * c;
+      aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+      d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+      c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d;
+      var del = d * c;
+      h *= del;
+      if (Math.abs(del - 1) < EPS) break;
+    }
+    return h;
+  }
+
+  function ibeta(x, a, b) {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    var bt = Math.exp(lnGamma(a + b) - lnGamma(a) - lnGamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+    if (x < (a + 1) / (a + b + 2)) return bt * betacf(a, b, x) / a;
+    return 1 - bt * betacf(b, a, 1 - x) / b;
+  }
+
+  // Two-tailed p-value for a t statistic
+  function pTwo(t, df) {
+    if (t === 0) return 1;
+    return ibeta(df / (df + t * t), df / 2, 0.5);
+  }
+
+  function starsFor(p) {
+    if (p < 0.001) return "***";
+    if (p < 0.01) return "**";
+    if (p < 0.05) return "*";
+    return "";
+  }
+
+  function compute(s) {
+    var se = s.sd * Math.sqrt(2 / s.n);
+    var t = s.diff / se;
+    var df = 2 * s.n - 2;
+    var p = pTwo(Math.abs(t), df);
+    return { se: se, t: t, df: df, p: p, stars: starsFor(p) };
+  }
+
+  // ---------- Formatting ----------
+  function fmt(x, d) {
+    var v = Number(x).toFixed(d);
+    if (Number(v) === 0) v = (0).toFixed(d); // avoid "-0.00"
+    return v.replace("-", "\u2212");
+  }
+  function fmtP(p) {
+    if (p < 0.001) return "< .001";
+    if (p > 0.999) return "> .999";
+    var s = p.toFixed(3);
+    // Near a star threshold, show a fourth digit so the readout never contradicts the stars
+    [0.05, 0.01, 0.001].forEach(function (cut) {
+      var dg = 3;
+      while (dg < 8 && (p < cut) !== (Number(s) < cut)) { dg++; s = p.toFixed(dg); }
+    });
+    return "= " + s.replace(/^0/, "");
+  }
+  function fmtInt(n) { return Number(n).toLocaleString("en-US"); }
+
+  // ---------- Scenarios ----------
+  var MOONS_PER_YEAR = 365.25 / 29.53;
+
+  var SCEN = {
+    moon: {
+      title: "Mean Emergency Department Visits per Day, by Lunar Phase",
+      labelA: "Full-moon days",
+      labelB: "Other days",
+      baseB: 120,
+      dec: 2,
+      intro:
+        "<p>Emergency department staff have a long tradition of blaming the full moon for busy shifts (allegedly, and at some volume). Table 1 compares the mean number of visits per day on full-moon days with the mean on all other days at one hypothetical hospital.</p>" +
+        "<p>Use the controls to change the size of the difference, how much daily visits vary, and how many days of data each group contains. Then watch the stars.</p>" +
+        "<p class=\"sim\">The data are simulated. The folklore is not.</p>",
+      diff: { min: -10, max: 10, step: 0.05, def: 1.5,
+        hint: "Full-moon days minus other days, in visits per day. Positive values mean busier full moons." },
+      sd: { min: 5, max: 40, step: 0.5, def: 15,
+        hint: "How much the daily visit count varies within each group, in visits per day." },
+      n: { min: 5, max: 20000, def: 30, hint: "Number of days in each group." },
+      aside: function (n) {
+        var yrs = n / MOONS_PER_YEAR;
+        var span;
+        if (yrs < 1) {
+          var mo = Math.max(1, Math.round(yrs * 12));
+          span = "about " + mo + (mo === 1 ? " month" : " months");
+        } else if (yrs < 10) {
+          span = "about " + yrs.toFixed(1) + " years";
+        } else {
+          span = "about " + fmtInt(Math.round(yrs)) + " years";
+        }
+        var txt = "Collecting " + fmtInt(n) + " full-moon days would take " + span +
+          " of observation, at roughly 12.4 full moons per year.";
+        if (yrs >= 350) txt += " No hospital in the United States has been open that long.";
+        else if (yrs >= 45) txt += " That is longer than most nursing careers.";
+        return txt;
+      }
+    },
+    rj: {
+      title: "Mean Victim Satisfaction, by Case Processing Type",
+      labelA: "Restorative justice conference",
+      labelB: "Standard court processing",
+      baseB: 6.0,
+      dec: 2,
+      intro:
+        "<p>In a restorative justice conference, a victim, an offender, and their supporters meet with a trained facilitator to talk through the harm done and what repairing it would require. Table 1 compares victims whose cases went to a conference with victims whose cases went through standard court processing.</p>" +
+        "<p>Each victim rated their satisfaction with how the case was handled on a scale from 1 (very dissatisfied) to 10 (very satisfied). Use the controls to change the study, then watch the stars.</p>" +
+        "<p class=\"sim\">The data are simulated. The comparison is a real one. A systematic review of ten randomized trials found that conference victims were consistently more satisfied with how their cases were handled (<a href=\"https://doi.org/10.4073/csr.2013.12\" target=\"_blank\" rel=\"noopener\">Strang et al., 2013</a>).</p>",
+      diff: { min: -3, max: 3, step: 0.05, def: 1.0,
+        hint: "Conference minus court, in scale points. Positive values mean conference victims were more satisfied." },
+      sd: { min: 0.5, max: 4, step: 0.05, def: 2.0,
+        hint: "How much satisfaction ratings vary within each group, in scale points." },
+      n: { min: 5, max: 5000, def: 20, hint: "Number of victims in each group." },
+      aside: function (n) {
+        return "Each group contains " + fmtInt(n) + " victims, for " + fmtInt(2 * n) + " cases in total.";
+      }
+    }
+  };
+
+  var state = {};
+  Object.keys(SCEN).forEach(function (k) {
+    var c = SCEN[k];
+    state[k] = { diff: c.diff.def, sd: c.sd.def, n: c.n.def, saved: [], lastStars: null };
+  });
+  var current = "moon";
+  var MAX_SAVED = 4;
+
+  // ---------- Elements ----------
+  function $(id) { return document.getElementById(id); }
+  var el = {
+    scenario: $("scenario"), intro: $("intro"), ttitle: $("ttitle"), table: $("results"),
+    diffRange: $("diffRange"), diffNum: $("diffNum"), diffHint: $("diffHint"),
+    sdRange: $("sdRange"), sdNum: $("sdNum"), sdHint: $("sdHint"),
+    nRange: $("nRange"), nNum: $("nNum"), nHint: $("nHint"),
+    stat: $("stat"), aside: $("aside"),
+    saveBtn: $("saveBtn"), clearBtn: $("clearBtn"), resetBtn: $("resetBtn"), status: $("status")
+  };
+
+  // Log-scale mapping for sample size
+  function nToSlider(n, c) {
+    var lo = Math.log(c.n.min), hi = Math.log(c.n.max);
+    return Math.round(1000 * (Math.log(n) - lo) / (hi - lo));
+  }
+  function sliderToN(v, c) {
+    var lo = Math.log(c.n.min), hi = Math.log(c.n.max);
+    return Math.round(Math.exp(lo + (v / 1000) * (hi - lo)));
+  }
+  function clamp(x, lo, hi) { return Math.min(hi, Math.max(lo, x)); }
+  function roundStep(x, step) {
+    var d = (String(step).split(".")[1] || "").length;
+    return Number((Math.round(x / step) * step).toFixed(d));
+  }
+
+  function loadScenario() {
+    var c = SCEN[current], s = state[current];
+    el.intro.innerHTML = c.intro;
+    el.ttitle.textContent = c.title;
+    el.diffHint.textContent = c.diff.hint;
+    el.sdHint.textContent = c.sd.hint;
+    el.nHint.textContent = c.n.hint;
+    [["diff", el.diffRange, el.diffNum], ["sd", el.sdRange, el.sdNum]].forEach(function (r) {
+      var cfg = c[r[0]];
+      r[1].min = cfg.min; r[1].max = cfg.max; r[1].step = cfg.step;
+      r[2].min = cfg.min; r[2].max = cfg.max; r[2].step = cfg.step;
+    });
+    el.nNum.min = c.n.min; el.nNum.max = c.n.max;
+    syncInputs();
+    el.status.textContent = "";
+    render(false);
+  }
+
+  function syncInputs() {
+    var c = SCEN[current], s = state[current];
+    el.diffRange.value = s.diff; el.diffNum.value = s.diff;
+    el.sdRange.value = s.sd; el.sdNum.value = s.sd;
+    el.nRange.value = nToSlider(s.n, c); el.nNum.value = s.n;
+  }
+
+  function snapshot() {
+    var c = SCEN[current], s = state[current];
+    var r = compute(s);
+    return {
+      meanA: c.baseB + s.diff, meanB: c.baseB, sd: s.sd, diff: s.diff, n: s.n,
+      se: r.se, t: r.t, df: r.df, p: r.p, stars: r.stars
+    };
+  }
+
+  function render(allowFlash) {
+    var c = SCEN[current], s = state[current];
+    var cur = snapshot();
+    var cols = s.saved.concat([cur]);
+    var d = c.dec;
+
+    var head = "<thead><tr><th class=\"rowhead\" scope=\"col\">Measure</th>";
+    s.saved.forEach(function (_, i) { head += "<th scope=\"col\">(" + (i + 1) + ")</th>"; });
+    head += "<th scope=\"col\" class=\"cur\">Current</th></tr></thead>";
+
+    function row(label, cls, cellFn) {
+      var h = "<tr" + (cls ? " class=\"" + cls + "\"" : "") + "><td class=\"rowlab\">" + label + "</td>";
+      cols.forEach(function (col, i) {
+        var isCur = i === cols.length - 1;
+        h += "<td" + (isCur ? " class=\"cur\"" + (cellFn.id && isCur ? " id=\"" + cellFn.id + "\"" : "") : "") + ">" + cellFn(col) + "</td>";
+      });
+      return h + "</tr>";
+    }
+    var blankStars = "<span class=\"stars\"></span>";
+    var diffCell = function (col) { return fmt(col.diff, 2) + "<span class=\"stars\">" + col.stars + "</span>"; };
+    diffCell.id = "diffCell";
+
+    var body = "<tbody>";
+    body += row(c.labelA, "first", function (col) { return fmt(col.meanA, d) + blankStars; });
+    body += row("", "paren", function (col) { return "(" + fmt(col.sd, d) + ")" + blankStars; });
+    body += row(c.labelB, "", function (col) { return fmt(col.meanB, d) + blankStars; });
+    body += row("", "paren", function (col) { return "(" + fmt(col.sd, d) + ")" + blankStars; });
+    body += row("Difference", "", diffCell);
+    body += row("", "paren", function (col) { return "(" + fmt(col.se, 2) + ")" + blankStars; });
+    body += row("<i>n</i> per group", "", function (col) { return fmtInt(col.n) + blankStars; });
+    body += "</tbody>";
+
+    el.table.innerHTML = head + body;
+
+    if (allowFlash && s.lastStars !== null && s.lastStars !== cur.stars) {
+      var cell = document.getElementById("diffCell");
+      if (cell) cell.classList.add("flash");
+    }
+    s.lastStars = cur.stars;
+
+    el.stat.innerHTML = "<i>t</i>(" + fmtInt(cur.df) + ") = " + fmt(cur.t, 2) + ", <i>p</i> " + fmtP(cur.p);
+    el.aside.textContent = c.aside(s.n);
+
+    el.saveBtn.disabled = s.saved.length >= MAX_SAVED;
+    el.clearBtn.disabled = s.saved.length === 0;
+  }
+
+  // ---------- Events ----------
+  function onDiff(v) {
+    var c = SCEN[current];
+    if (isNaN(v)) return;
+    state[current].diff = roundStep(clamp(v, c.diff.min, c.diff.max), c.diff.step);
+  }
+  function onSd(v) {
+    var c = SCEN[current];
+    if (isNaN(v)) return;
+    state[current].sd = roundStep(clamp(v, c.sd.min, c.sd.max), c.sd.step);
+  }
+  function onN(v) {
+    var c = SCEN[current];
+    if (isNaN(v)) return;
+    state[current].n = Math.round(clamp(v, c.n.min, c.n.max));
+  }
+
+  el.diffRange.addEventListener("input", function () { onDiff(parseFloat(this.value)); el.diffNum.value = state[current].diff; render(true); });
+  el.sdRange.addEventListener("input", function () { onSd(parseFloat(this.value)); el.sdNum.value = state[current].sd; render(true); });
+  el.nRange.addEventListener("input", function () {
+    onN(sliderToN(parseInt(this.value, 10), SCEN[current]));
+    el.nNum.value = state[current].n; render(true);
+  });
+
+  el.diffNum.addEventListener("change", function () { onDiff(parseFloat(this.value)); syncInputs(); render(true); });
+  el.sdNum.addEventListener("change", function () { onSd(parseFloat(this.value)); syncInputs(); render(true); });
+  el.nNum.addEventListener("change", function () { onN(parseFloat(this.value)); syncInputs(); render(true); });
+
+  el.scenario.addEventListener("change", function () { current = this.value; loadScenario(); });
+
+  el.saveBtn.addEventListener("click", function () {
+    var s = state[current];
+    if (s.saved.length >= MAX_SAVED) return;
+    s.saved.push(snapshot());
+    el.status.textContent = "Saved as column (" + s.saved.length + ")." +
+      (s.saved.length >= MAX_SAVED ? " The table is full. Clear the saved columns to start a new comparison." : "");
+    render(false);
+  });
+  el.clearBtn.addEventListener("click", function () {
+    state[current].saved = [];
+    el.status.textContent = "Saved columns cleared.";
+    render(false);
+  });
+  el.resetBtn.addEventListener("click", function () {
+    var c = SCEN[current], s = state[current];
+    s.diff = c.diff.def; s.sd = c.sd.def; s.n = c.n.def;
+    syncInputs();
+    el.status.textContent = "Controls reset. Saved columns were kept.";
+    render(true);
+  });
+
+  loadScenario();
+
+  // Exposed for testing only
+  window.__sig = { pTwo: pTwo, compute: compute, starsFor: starsFor };
+})();
+</script>
+</body>
+</html>
